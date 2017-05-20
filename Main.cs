@@ -158,13 +158,28 @@ namespace IAR_Gen
                     subReader.Close();
                 }
                 while (reader.ReadToNextSibling("configuration"));
-                //read files
+                //read files with group
                 reader = XmlReader.Create(new StringReader(text));
                 do
                 {
-                    prjGroups.Add(GetSubGroup(ref reader, null));
+                    var ret = GetSubGroup(ref reader, null, "group");
+                    if (ret != null)
+                    {
+                        prjGroups.Add(ret);
+                    }
                 }
                 while (reader.ReadToNextSibling("group"));
+                reader = XmlReader.Create(new StringReader(text));
+                //read files without group
+                reader.ReadToFollowing("file");
+                if (reader.Depth == 1)
+                {
+                    var ret = GetTopGroup(ref reader, null, "file");
+                    if (ret != null)
+                    {
+                        prjGroups.Add(ret);
+                    }
+                }
                 //
                 FormatPath(ref prjGroups);
                 FormatCfgPath(ref prjConfigs);
@@ -284,10 +299,11 @@ namespace IAR_Gen
             return ret;
         }
 
-        PrjGroup GetSubGroup(ref XmlReader reader, PrjGroup parent)
+        PrjGroup GetSubGroup(ref XmlReader reader, PrjGroup parent, string NodeName)
         {
-            if (reader.NodeType != XmlNodeType.Element || reader.Name != "group")
-                reader.ReadToFollowing("group");
+            if (reader.NodeType != XmlNodeType.Element || reader.Name != NodeName)
+                reader.ReadToFollowing(NodeName);
+            if (reader.EOF) return null;
             var ret = new PrjGroup(ref parent);
             XmlReader subReader = reader.ReadSubtree();
             do
@@ -303,7 +319,7 @@ namespace IAR_Gen
                     switch (subReader.Name)
                     {
                     case "group":
-                        ret.SubGroups.Add(GetSubGroup(ref subReader, ret));
+                        ret.SubGroups.Add(GetSubGroup(ref subReader, ret, NodeName));
                         break;
                     case "file":
                         var subsubReader = subReader.ReadSubtree();
@@ -355,6 +371,56 @@ namespace IAR_Gen
             }
             while (!subReader.EOF);
             subReader.Close();
+            return ret;
+        }
+
+        PrjGroup GetTopGroup(ref XmlReader reader, PrjGroup parent, string NodeName)
+        {
+            if (reader.NodeType != XmlNodeType.Element || reader.Name != NodeName)
+                reader.ReadToFollowing(NodeName);
+            if (reader.EOF) return null;
+            var ret = new PrjGroup(ref parent);
+            ret.Name = string.Empty;
+            do
+            {
+                XmlReader subReader = reader.ReadSubtree();
+                if (subReader.Read() && subReader.NodeType == XmlNodeType.Element)
+                {
+                    var subsubReader = subReader.ReadSubtree();
+                    do
+                    {
+                        subsubReader.Read();
+                        switch (subsubReader.Name)
+                        {
+                        case "name":
+                            subsubReader.Read();
+                            if (subsubReader.NodeType == XmlNodeType.Text && subsubReader.HasValue && subsubReader.Depth == 2)
+                            {
+                                ret.Files.Add(new PrjGroup.PrjFile());
+                                ret.Files.Last().Name = subsubReader.Value;
+                            }
+                            break;
+                        case "excluded":
+                            if (subsubReader.NodeType == XmlNodeType.Element)
+                            {
+                                var subsubsubReader = subsubReader.ReadSubtree();
+                                do
+                                {
+                                    subsubsubReader.Read();
+                                    if (subsubsubReader.NodeType == XmlNodeType.Text)
+                                        ret.Files.Last().Excludes.Add(subsubsubReader.Value);
+                                }
+                                while (!subsubsubReader.EOF);
+                                subsubsubReader.Close();
+                            }
+                            break;
+                        }
+                    }
+                    while (!subsubReader.EOF);
+                    subsubReader.Close();
+                }
+            }
+            while (reader.ReadToNextSibling(NodeName));
             return ret;
         }
     }
