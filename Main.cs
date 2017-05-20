@@ -169,17 +169,21 @@ namespace IAR_Gen
                     }
                 }
                 while (reader.ReadToNextSibling("group"));
-                reader = XmlReader.Create(new StringReader(text));
                 //read files without group
-                reader.ReadToFollowing("file");
-                if (reader.Depth == 1)
+                reader = XmlReader.Create(new StringReader(text));
+                do
                 {
-                    var ret = GetTopGroup(ref reader, null, "file");
-                    if (ret != null)
+                    reader.ReadToFollowing("file");
+                    if (reader.Depth == 1 && reader.NodeType == XmlNodeType.Element)
                     {
-                        prjGroups.Add(ret);
+                        var ret = GetTopGroup(ref reader, null, "file");
+                        if (ret != null)
+                        {
+                            prjGroups.Add(ret);
+                        }
                     }
                 }
+                while (!reader.EOF);
                 //
                 FormatPath(ref prjGroups);
                 FormatCfgPath(ref prjConfigs);
@@ -376,13 +380,13 @@ namespace IAR_Gen
 
         PrjGroup GetTopGroup(ref XmlReader reader, PrjGroup parent, string NodeName)
         {
-            if (reader.NodeType != XmlNodeType.Element || reader.Name != NodeName)
-                reader.ReadToFollowing(NodeName);
             if (reader.EOF) return null;
             var ret = new PrjGroup(ref parent);
             ret.Name = string.Empty;
             do
             {
+                if (reader.Depth != 1)
+                    continue;
                 XmlReader subReader = reader.ReadSubtree();
                 if (subReader.Read() && subReader.NodeType == XmlNodeType.Element)
                 {
