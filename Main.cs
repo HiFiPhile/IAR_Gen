@@ -153,6 +153,8 @@ namespace IAR_Gen
                     prjConfigs.Last().Defines.Add("__ICCARM__");
                     prjConfigs.Last().Defines.Add("_Pragma(x)=");
                     prjConfigs.Last().Defines.Add("__interrupt=");
+                    prjConfigs.Last().Defines.Add("__packed=");
+                    prjConfigs.Last().Defines.Add("__weak=");
                     prjConfigs.Last().PreIncludes = GetSubValue(ref subReader, "PreInclude");
                     prjConfigs.Last().IncludePaths = GetSubValue(ref subReader, "CCIncludePath2");
                     subReader.Close();
@@ -239,6 +241,10 @@ namespace IAR_Gen
                                 };
                                 Process.Start(psi);
                             }
+                        }
+                        if (checkBox1.Checked)
+                        {
+                            Application.Exit();
                         }
                     }
                     else
