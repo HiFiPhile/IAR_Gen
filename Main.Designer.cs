@@ -68,6 +68,8 @@
             this.cmbTarget.FormattingEnabled = true;
             this.cmbTarget.Items.AddRange(new object[]
             {
+                "vs2019",
+                "vs2017",
                 "vs2015",
                 "vs2013",
                 "vs2012",

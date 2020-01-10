@@ -155,6 +155,16 @@ namespace IAR_Gen
                     prjConfigs.Last().Defines.Add("__interrupt=");
                     prjConfigs.Last().Defines.Add("__packed=");
                     prjConfigs.Last().Defines.Add("__weak=");
+                    prjConfigs.Last().Defines.Add("__REV(x)=x");
+                    prjConfigs.Last().Defines.Add("__REV16(x)=x");
+                    prjConfigs.Last().Defines.Add("__disable_irq()=");
+                    prjConfigs.Last().Defines.Add("__enable_irq()=");
+                    prjConfigs.Last().Defines.Add("__noreturn=");
+                    prjConfigs.Last().Defines.Add("__no_init=");
+                    prjConfigs.Last().Defines.Add("__I=");
+                    prjConfigs.Last().Defines.Add("__IO=");
+                    prjConfigs.Last().Defines.Add("__O=");
+                    prjConfigs.Last().Defines.Add("__ramfunc=");
                     prjConfigs.Last().PreIncludes = GetSubValue(ref subReader, "PreInclude");
                     prjConfigs.Last().IncludePaths = GetSubValue(ref subReader, "CCIncludePath2");
                     subReader.Close();
@@ -212,7 +222,7 @@ namespace IAR_Gen
                         var vGroups = PrjGroup.ReadVpath(ref prjGroups, conf.Name);
                         file.WriteLine("  vpaths {" + string.Join(" , ", vGroups) + " }");
                     }
-                    file.Write(IncOverride);
+                    //file.Write(IncOverride);
                     file.Close();
                     Process proc = new Process
                     {
